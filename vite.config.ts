@@ -15,9 +15,7 @@ export default defineConfig({
   },
   plugins: [
     dts({
-      include: ['src/index.ts'],
       outDir: 'dist',
-      rollupTypes: true,
     }),
   ],
 })
