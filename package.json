@@ -1,9 +1,19 @@
 {
   "name": "@random-mesh/rmsl-three",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "type": "module",
-  "files": ["dist"],
-  "keywords": ["threejs", "three.js", "rmsl", "shader", "webgl", "3d", "graphics"],
+  "files": [
+    "dist"
+  ],
+  "keywords": [
+    "threejs",
+    "three.js",
+    "rmsl",
+    "shader",
+    "webgl",
+    "3d",
+    "graphics"
+  ],
   "main": "./dist/rmsl-three.js",
   "module": "./dist/rmsl-three.js",
   "types": "./dist/index.d.ts",
