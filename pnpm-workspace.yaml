@@ -1,0 +1,7 @@
+packages:
+  - .
+  - apps/*
+minimumReleaseAgeExclude:
+  - '@random-mesh/rmsl@1.0.5'
+onlyBuiltDependencies:
+  - esbuild

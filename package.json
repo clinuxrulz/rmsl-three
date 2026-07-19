@@ -1,0 +1,39 @@
+{
+  "name": "@random-mesh/rmsl-three",
+  "version": "0.1.0",
+  "type": "module",
+  "files": ["dist"],
+  "keywords": ["threejs", "three.js", "rmsl", "shader", "webgl", "3d", "graphics"],
+  "main": "./dist/rmsl-three.js",
+  "module": "./dist/rmsl-three.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/rmsl-three.js"
+    }
+  },
+  "scripts": {
+    "build": "vite build",
+    "dev": "vite build --watch",
+    "type-check": "tsc --noEmit",
+    "demo:setup": "cd apps/demo && pnpm install && cd ../demo-webgpu && pnpm install",
+    "demo:build": "pnpm build && cd apps/demo && pnpm build",
+    "demo:dev": "cd apps/demo && pnpm dev",
+    "demo:start": "pnpm build && cd apps/demo && pnpm start",
+    "demo:webgpu:build": "pnpm build && cd apps/demo-webgpu && pnpm build",
+    "demo:webgpu:dev": "cd apps/demo-webgpu && pnpm dev",
+    "demo:webgpu:start": "pnpm build && cd apps/demo-webgpu && pnpm dev"
+  },
+  "devDependencies": {
+    "@types/three": "0.170.0",
+    "three": "^0.170.0",
+    "typescript": "^5.7.2",
+    "vite": "^7.1.4",
+    "vite-plugin-dts": "^5.0.3"
+  },
+  "peerDependencies": {
+    "@random-mesh/rmsl": "1.0.6",
+    "three": "^0.170.0"
+  }
+}

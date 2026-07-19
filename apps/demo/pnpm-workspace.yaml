@@ -1,0 +1,5 @@
+allowBuilds:
+  esbuild: true
+minimumReleaseAge: 1440 # Default 24 hours
+minimumReleaseAgeExclude:
+  - '@random-mesh/rmsl'
