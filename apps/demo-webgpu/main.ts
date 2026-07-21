@@ -1,5 +1,5 @@
 import * as THREE from 'three'
-import { WebGPURenderer, MeshBasicNodeMaterial, attribute, uniform, positionLocal, Fn as ThreeFn, builtinPosition, output, mix, clamp, length, sub, mul, add, div, sin, cos } from 'three/webgpu'
+import { WebGPURenderer, MeshBasicNodeMaterial, attribute, uniform, positionLocal } from 'three/webgpu'
 import { RMSLNodeMaterial } from "../../src/RMSLNodeMaterial";
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
 import {
@@ -29,15 +29,15 @@ const fragmentMain = Fn((
   uv: Node<"vec2">,
   posLocal: Node<"vec3">
 ) => {
-  const gradient1 = uColor1.mix(uColor2, uv.x.mult(10.0).add(uTime.mult(0.5)).sin().mult(0.5).add(0.5))
-  const gradient2 = uColor2.mix(uColor3, uv.y.mult(10.0).add(uTime.mult(0.7)).sin().mult(0.5).add(0.5))
-  const wave1 = posLocal.x.mult(10.0).add(uTime.mult(2.0)).sin()
-  const wave2 = posLocal.z.mult(10.0).add(uTime.mult(2.0)).sin()
-  const wave = wave1.add(wave2).div(2.0)
-  const finalColor = gradient1.mult(0.7).add(vec3(wave.mult(0.3)))
-  const distance = uv.sub(vec2(0.5)).length().mult(2.0).sub(1.0)
-  const vignette = distance.mult(-1.0).clamp(0.25, 1.0)
-  return vec4(finalColor.mult(vignette), 1.0)
+  const gradient1 = uColor1.mix(uColor2, uv.x.mult(10.0).add(uTime.mult(0.5)).sin().mult(0.5).add(0.5)).toVar();
+  const gradient2 = uColor2.mix(uColor3, uv.y.mult(10.0).add(uTime.mult(0.7)).sin().mult(0.5).add(0.5)).toVar();
+  const wave1 = posLocal.x.mult(10.0).add(uTime.mult(2.0)).sin().toVar();
+  const wave2 = posLocal.z.mult(10.0).add(uTime.mult(2.0)).sin().toVar();
+  const wave = wave1.add(wave2).div(2.0).toVar();
+  const finalColor = gradient1.mult(0.7).add(vec3(wave.mult(0.3))).toVar();
+  const distance = uv.sub(vec2(0.5)).length().mult(2.0).sub(1.0).toVar();
+  const vignette = distance.mult(-1.0).clamp(0.25, 1.0).toVar();
+  return vec4(finalColor.mult(vignette), 1.0);
 })
 
 // Create scene

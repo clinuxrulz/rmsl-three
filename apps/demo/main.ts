@@ -8,67 +8,67 @@ import {
   vec4, attribute, builtinPosition
 } from '@random-mesh/rmsl'
 
-const uTime = uniformRaw("uTime", "float").node();
-const uv = varying('vec2').node();
-const position = attribute('vec3').node();
-const vPosition = varying('vec3').node();
-const uColor1 = uniformRaw("uColor1", 'vec3').node()
-const uColor2 = uniformRaw("uColor2", 'vec3').node()
-const uColor3 = uniformRaw("uColor3", 'vec3').node()
+const uTime = uniformRaw("uTime", "float");
+const uv = varying('vec2');
+const position = attribute('vec3');
+const vPosition = varying('vec3');
+const uColor1 = uniformRaw("uColor1", 'vec3');
+const uColor2 = uniformRaw("uColor2", 'vec3');
+const uColor3 = uniformRaw("uColor3", 'vec3');
 
 // three.js built-in matrices, declared as RMSL uniforms with the exact names
 // three.js uses so the renderer populates them automatically each frame.
-const projectionMatrix = uniformRaw("projectionMatrix", "mat4").node()
-const modelViewMatrix = uniformRaw("modelViewMatrix", "mat4").node()
+const projectionMatrix = uniformRaw("projectionMatrix", "mat4");
+const modelViewMatrix = uniformRaw("modelViewMatrix", "mat4");
 
 // Create RMSL shaders
 const vertexMain = Fn(() => {
   // Get UV coordinates using explicit variables
-  const uvX = position.x.mult(0.5).toVar()
-  const uvY = position.y.mult(0.5).toVar()
-  uv.assign(vec2(uvX, uvY).add(0.5))
+  const uvX = position.x.mult(0.5).toVar();
+  const uvY = position.y.mult(0.5).toVar();
+  uv.assign(vec2(uvX, uvY).add(0.5));
 
   // Displace the vertex based on time and position
-  const displacement = position.x.mult(10.0).add(uTime.mult(2.0)).sin().mult(0.1);
-  const displacedY = position.y.add(displacement)
+  const displacement = position.x.mult(10.0).add(uTime.mult(2.0)).sin().mult(0.1).toVar();
+  const displacedY = position.y.add(displacement).toVar();
 
   // Pass the (displaced) local position to the fragment shader as a varying
-  const displaced = vec3(position.x, displacedY, position.z)
-  vPosition.assign(displaced)
+  const displaced = vec3(position.x, displacedY, position.z).toVar();
+  vPosition.assign(displaced);
 
   // Transform local position by the model-view and projection matrices so the
   // solid mesh aligns with the rest of the scene (e.g. the wireframe overlay).
-  const clipPos = projectionMatrix.mult(modelViewMatrix).mult(vec4(displaced, 1.0))
+  const clipPos = projectionMatrix.mult(modelViewMatrix).mult(vec4(displaced, 1.0)).toVar();
 
-  builtinPosition().assign(clipPos)
+  builtinPosition().assign(clipPos);
 })
 
 const fragmentMain = Fn(() => {
 
   // Create output
-  const outputColor = output("vec4")
+  const outputColor = output("vec4");
 
   // Create moving gradient pattern
-  const gradient1 = uColor1.mix(uColor2, uv.x.mult(10.0).add(uTime.mult(0.5)).sin().mult(0.5).add(0.5))
-  const gradient2 = uColor2.mix(uColor3, uv.y.mult(10.0).add(uTime.mult(0.7)).sin().mult(0.5).add(0.5))
+  const gradient1 = uColor1.mix(uColor2, uv.x.mult(10.0).add(uTime.mult(0.5)).sin().mult(0.5).add(0.5)).toVar();
+  const gradient2 = uColor2.mix(uColor3, uv.y.mult(10.0).add(uTime.mult(0.7)).sin().mult(0.5).add(0.5)).toVar();
 
   // Combine gradients
-  const wave1 = vPosition.x.mult(10.0).add(uTime.mult(2.0)).sin()
-  const wave2 = vPosition.z.mult(10.0).add(uTime.mult(2.0)).sin()
-  const wave = wave1.add(wave2).div(2.0)
+  const wave1 = vPosition.x.mult(10.0).add(uTime.mult(2.0)).sin().toVar();
+  const wave2 = vPosition.z.mult(10.0).add(uTime.mult(2.0)).sin().toVar();
+  const wave = wave1.add(wave2).div(2.0).toVar();
 
   // Mix with base color
-  const finalColor = gradient1.mult(0.7).add(vec3(wave.mult(0.3)))
+  const finalColor = gradient1.mult(0.7).add(vec3(wave.mult(0.3))).toVar();
 
   // Add a gentle distance-based vignette (kept above 0.25 so the mesh never
   // fades to fully black and becomes invisible against the dark background)
-  const distance = uv.sub(vec2(0.5)).length().mult(2.0).sub(1.0)
-  const vignette = distance.mult(-1.0).clamp(0.25, 1.0)
+  const distance = uv.sub(vec2(0.5)).length().mult(2.0).sub(1.0).toVar();
+  const vignette = distance.mult(-1.0).clamp(0.25, 1.0).toVar();
 
   // Assign to output
-  outputColor.assign(vec4(finalColor.mult(vignette), 1.0))
+  outputColor.assign(vec4(finalColor.mult(vignette), 1.0));
 
-  return outputColor
+  return outputColor;
 })
 
 // Create scene
