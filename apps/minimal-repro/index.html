@@ -2,10 +2,11 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<title>Chrome Bug: WebGPURenderer WebGL fallback + TSL shaders</title>
+<title>Chrome Bug: WebGPURenderer WebGL fallback with specific GLSL shaders</title>
 <style>
   body { margin: 0; overflow: hidden; background: #111; color: #eee; font-family: monospace; font-size: 13px; }
   #log { position: absolute; top: 10px; left: 10px; background: rgba(0,0,0,0.85); padding: 12px; border-radius: 6px; max-width: 600px; white-space: pre-wrap; pointer-events: none; z-index: 10; }
+  canvas { display: block; }
 </style>
 </head>
 <body>
@@ -22,7 +23,7 @@
 
 <script type="module">
 import {
-  WebGPURenderer, NodeMaterial, color,
+  WebGPURenderer, NodeMaterial,
   glslFn, wgslFn, uniform, attribute, positionLocal,
   Scene, PerspectiveCamera, SphereGeometry, Mesh, Clock, Color,
   DoubleSide,
@@ -32,10 +33,9 @@ const logEl = document.getElementById('log')
 function log(m) { logEl.textContent += m + '\n' }
 
 log('UA: ' + navigator.userAgent)
-log('WebGPU: ' + ('gpu' in navigator))
-if ('gpu' in navigator) log('gpu: ' + navigator.gpu)
+log('gpu in navigator: ' + ('gpu' in navigator))
 
-// --- Pre-compiled shaders (extracted from RMSL compiler) ---
+// Pre-compiled shaders (RMSL → GLSL/WGSL)
 const VERTEX_GLSL = `vec4 vertexMain(float uTime, vec3 position, vec2 uv) {
   return vec4(vec3(position.x, position.y + sin(position.x * 10.0 + uTime * 2.0) * 0.1, position.z), 1.0);
 }`
@@ -70,20 +70,21 @@ const FRAGMENT_WGSL = `fn fragmentMain(uTime: f32, uColor1: vec3<f32>, uColor2: 
 }
 `
 
-// --- Scene setup ---
+// Scene
 const scene = new Scene()
 scene.background = new Color(0x111111)
-
 const camera = new PerspectiveCamera(75, innerWidth / innerHeight, 0.1, 1000)
 camera.position.z = 3
 
-// --- Renderer ---
-const renderer = new WebGPURenderer({ antialias: true })
+// WebGPURenderer with forceWebGL to always take the WebGL fallback path
+const renderer = new WebGPURenderer({ antialias: true, forceWebGL: true })
 renderer.setSize(innerWidth, innerHeight)
 renderer.setPixelRatio(Math.min(devicePixelRatio, 2))
 document.body.prepend(renderer.domElement)
 
-// --- TSL inputs (uniforms + attributes) ---
+log('WebGPURenderer(forceWebGL) created')
+
+// TSL nodes
 const uTime = uniform(0)
 const uColor1 = uniform(new Color(0xff0000))
 const uColor2 = uniform(new Color(0x00ff00))
@@ -91,18 +92,16 @@ const uColor3 = uniform(new Color(0x0000ff))
 const posAttr = attribute('position')
 const uvAttr = attribute('uv')
 
-// --- Create material that selects shader variant based on backend ---
-// Same pattern as RMSLNodeMaterial.build():
-//   isWebGLBackend ? glslFn(code) : wgslFn(code)
 const vertexTSLInputs = { uTime, position: posAttr, uv: uvAttr }
 const fragmentTSLInputs = { uTime, uColor1, uColor2, uColor3, uv: uvAttr, posLocal: positionLocal }
 
+// Material that selects GLSL or WGSL based on backend (like RMSLNodeMaterial)
 const material = new NodeMaterial()
 material.side = DoubleSide
 
-// Override build to select GLSL/WGSL based on backend (same pattern as RMSLNodeMaterial)
 material.build = function(builder) {
   const isWebGL = builder.renderer?.backend?.isWebGLBackend === true
+  log('build(): backend.isWebGLBackend=' + isWebGL)
   const vertexFn = isWebGL ? glslFn(VERTEX_GLSL) : wgslFn(VERTEX_WGSL)
   const fragmentFn = isWebGL ? glslFn(FRAGMENT_GLSL) : wgslFn(FRAGMENT_WGSL)
   this.positionNode = vertexFn(vertexTSLInputs)
@@ -112,39 +111,35 @@ material.build = function(builder) {
 }
 material.needsUpdate = true
 
-// --- Geometry ---
+// Geometry
 const geometry = new SphereGeometry(1, 64, 64)
 const mesh = new Mesh(geometry, material)
 scene.add(mesh)
 
-// --- Animation ---
+// Animation
 const clock = new Clock()
-function setUniform(name, value) {
-  const map = { uTime, uColor1, uColor2, uColor3 }
-  if (map[name]) map[name].value = value
-}
 
 function animate() {
   requestAnimationFrame(animate)
   const t = clock.getElapsedTime()
-  setUniform('uTime', t)
-  setUniform('uColor1', new Color('red'))
-  setUniform('uColor2', new Color('green'))
-  setUniform('uColor3', new Color('blue'))
+  uTime.value = t
+  uColor1.value = new Color('red')
+  uColor2.value = new Color('green')
+  uColor3.value = new Color('blue')
   mesh.rotation.y = t * 0.2
   mesh.rotation.x = Math.sin(0.3 * t) * 0.1
   renderer.render(scene, camera)
 }
 
-// --- Init (triggers WebGPU → WebGL fallback) ---
+// Init
 renderer.init().then(() => {
-  const bt = renderer.backend.isWebGLBackend ? 'WebGL2 (fallback)' : 'WebGPU'
-  log('✓ Backend: ' + bt)
-  log('✓ isWebGLBackend=' + renderer.backend.isWebGLBackend)
+  const bt = renderer.backend.isWebGLBackend ? 'WebGL2' : 'WebGPU'
+  log('✓ init() OK, backend=' + bt)
+  log('✓ Starting animation...')
   animate()
 }).catch((err) => {
-  log('✗ FAILED: ' + err.message)
-  log('Stack: ' + (err.stack || ''))
+  log('✗ init() FAILED: ' + err.message)
+  if (err.stack) log('  ' + err.stack.split('\n').slice(0, 3).join('\n  '))
 })
 </script>
 </body>
