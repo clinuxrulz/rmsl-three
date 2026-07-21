@@ -1,5 +1,5 @@
 import { RawShaderMaterial, GLSL3, type MaterialParameters, Color, Matrix4 } from 'three';
-import { compileGLSL, type Node, type ShaderType, type UniformNode } from '@random-mesh/rmsl';
+import { compileGLSL, type Node, type ShaderType, type UniformNode, type VertexRoot } from '@random-mesh/rmsl';
 
 interface RMSLShaderMaterialParameters extends MaterialParameters {
   vertex: Node<ShaderType> | Node<ShaderType>[] | (() => Node<ShaderType> | Node<ShaderType>[] | void);
@@ -20,7 +20,7 @@ export class RMSLShaderMaterial extends RawShaderMaterial {
     const vResult = (rawVResult ?? []) as Node<ShaderType> | Node<ShaderType>[];
     const fResult = (rawFResult ?? []) as Node<ShaderType> | Node<ShaderType>[];
     
-    const vsGLSL = stripVersion(compileGLSL.vertex(vResult));
+    const vsGLSL = stripVersion(compileGLSL.vertex(vResult as VertexRoot));
     const fsGLSL = stripVersion(compileGLSL.fragment(fResult));
     
     const uniformDefs = extractUniforms(vsGLSL, fsGLSL);
